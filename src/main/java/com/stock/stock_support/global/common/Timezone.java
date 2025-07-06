@@ -29,6 +29,13 @@ public class Timezone {
 		return localDateTime.format(dateTimeFormatter);
 	}
 
+	public String convertUsDateToKoreanDate(String usDateStr) {
+		LocalDate localDate = LocalDate.parse(usDateStr, dateFormatter);
+		var usZoned = localDate.atStartOfDay(usZoneId);
+		var koreanZoned = usZoned.withZoneSameInstant(defaultZoneId);
+		return koreanZoned.format(dateFormatter);
+	}
+
 	public LocalDateTime toLocalDateTime(long epochSeconds) {
 		return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSeconds), defaultZoneId);
 	}

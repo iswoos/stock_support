@@ -54,13 +54,11 @@ public class GetCompanyNewsService implements GetCompanyNewsUseCase {
 			JsonNode articles = objectMapper.readTree(response.body());
 			List<CompanyNewsInfo> result = new ArrayList<>();
 			for (JsonNode news : articles) {
-				String formattedDateTime = timezone.formatEpochSecondsToLocalTime(news.path("datetime").asLong());
-
 				result.add(new CompanyNewsInfo(
 					news.path("category").asText(),
-					formattedDateTime,
+					timezone.formatEpochSecondsToLocalTime(news.path("datetime").asLong()),
 					news.path("headline").asText(),
-					String.valueOf(news.path("id").asLong()),       // long → String 변환
+					String.valueOf(news.path("id").asLong()),
 					news.path("image").asText(),
 					news.path("related").asText(),
 					news.path("source").asText(),
