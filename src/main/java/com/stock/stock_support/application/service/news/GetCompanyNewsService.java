@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stock.stock_support.adapter.in.controller.news.dto.request.GetCompanyNews;
 import com.stock.stock_support.application.port.in.usecase.news.GetCompanyNewsUseCase;
+import com.stock.stock_support.application.port.in.usecase.news.dto.response.CompanyNewsInfo;
+import com.stock.stock_support.global.common.Timezone;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,41 +27,51 @@ public class GetCompanyNewsService implements GetCompanyNewsUseCase {
 	private String api_key;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final Timezone timezone;
 
 	@Override
-	public String getCompanyNews(GetCompanyNews getCompanyNews) {
+	public List<CompanyNewsInfo> getCompanyNews(GetCompanyNews getCompanyNews) {
 		try {
+			String from = getCompanyNews.from();
+			String to = getCompanyNews.to();
+
+			if (from == null || from.isBlank()) {
+				from = timezone.oneMonthAgoDateUs();
+			}
+			if (to == null || to.isBlank()) {
+				to = timezone.nowDateUs();
+			}
+
 			HttpClient client = HttpClient.newHttpClient();
 			HttpRequest httpRequest = HttpRequest.newBuilder()
-				.uri(new URI("https://finnhub.io/api/v1/company-news?symbol=%s&from=%s&to=%s&token=%s".formatted(getCompanyNews.symbol(), getCompanyNews.from(), getCompanyNews.to(), api_key)))
+				.uri(new URI("https://finnhub.io/api/v1/company-news?symbol=%s&from=%s&to=%s&token=%s".formatted(getCompanyNews.symbol(), from, to, api_key)))
 				.GET()
 				.build();
 
 			HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-			System.out.println("=== API RESPONSE ===");
-			System.out.println(response.body());
 
 			// Jackson으로 JSON 파싱
 			JsonNode articles = objectMapper.readTree(response.body());
-
-			StringBuilder sb = new StringBuilder();
-			int count = 0;
-
+			List<CompanyNewsInfo> result = new ArrayList<>();
 			for (JsonNode news : articles) {
-				sb.append("📰 ").append(news.path("headline").asText()).append("\n")
-					.append("🔗 ").append(news.path("url").asText()).append("\n\n");
-				count++;
-				if (count >= 10) break;
-			}
+				String formattedDateTime = timezone.formatEpochSecondsToLocalTime(news.path("datetime").asLong());
 
-			if (count == 0) {
-				return "⚠️ MarketWatch 기사 없음.";
+				result.add(new CompanyNewsInfo(
+					news.path("category").asText(),
+					formattedDateTime,
+					news.path("headline").asText(),
+					String.valueOf(news.path("id").asLong()),       // long → String 변환
+					news.path("image").asText(),
+					news.path("related").asText(),
+					news.path("source").asText(),
+					news.path("summary").asText(),
+					news.path("url").asText()
+				));
 			}
-
-			return sb.toString();
+			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
-			return "뉴스 불러오기 실패: " + e.getMessage();
+			return null;
 		}
 	}
 }

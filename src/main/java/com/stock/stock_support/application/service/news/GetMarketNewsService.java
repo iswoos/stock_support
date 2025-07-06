@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stock.stock_support.adapter.in.controller.news.dto.request.GetMarketNews;
 import com.stock.stock_support.application.port.in.usecase.news.GetMarketNewsUseCase;
+import com.stock.stock_support.application.port.in.usecase.news.dto.response.MarketNewsInfo;
+import com.stock.stock_support.global.common.Timezone;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,9 +27,10 @@ public class GetMarketNewsService implements GetMarketNewsUseCase {
 	private String api_key;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final Timezone timezone;
 
 	@Override
-	public String getMarketNews(GetMarketNews getMarketNews) {
+	public List<MarketNewsInfo> getMarketNews(GetMarketNews getMarketNews) {
 		try {
 			HttpClient client = HttpClient.newHttpClient();
 			HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -37,27 +42,26 @@ public class GetMarketNewsService implements GetMarketNewsUseCase {
 
 			// Jackson으로 JSON 파싱
 			JsonNode articles = objectMapper.readTree(response.body());
-
-			StringBuilder sb = new StringBuilder();
-			int count = 0;
-
+			List<MarketNewsInfo> result = new ArrayList<>();
 			for (JsonNode news : articles) {
-				if ("MarketWatch".equalsIgnoreCase(news.path("source").asText())) {
-					sb.append("📰 ").append(news.path("headline").asText()).append("\n")
-						.append("🔗 ").append(news.path("url").asText()).append("\n\n");
-					count++;
-				}
-				if (count >= 10) break;
-			}
+				String formattedDateTime = timezone.formatEpochSecondsToLocalTime(news.path("datetime").asLong());
 
-			if (count == 0) {
-				return "⚠️ MarketWatch 기사 없음.";
+				result.add(new MarketNewsInfo(
+					news.path("category").asText(),
+					formattedDateTime,
+					news.path("headline").asText(),
+					String.valueOf(news.path("id").asLong()),       // long → String 변환
+					news.path("image").asText(),
+					news.path("related").asText(),
+					news.path("source").asText(),
+					news.path("summary").asText(),
+					news.path("url").asText()
+				));
 			}
-
-			return sb.toString();
+			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
-			return "뉴스 불러오기 실패: " + e.getMessage();
+			return null;
 		}
 	}
 }
