@@ -43,9 +43,7 @@ public class GetStockInsiderTransactionsService implements GetStockInsiderTransa
 			HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
 			// Jackson으로 JSON 파싱
-			JsonNode transactions = objectMapper.readTree(response.body());
-			System.out.println("transactions json = " + transactions.toPrettyString());
-
+			JsonNode transactions = objectMapper.readTree(response.body()).path("data");
 
 			List<StockInsiderTransactionsInfo> result = new ArrayList<>();
 			for (JsonNode transaction : transactions) {
