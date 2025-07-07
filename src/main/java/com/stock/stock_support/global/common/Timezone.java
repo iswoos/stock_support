@@ -47,4 +47,12 @@ public class Timezone {
 	public String oneMonthAgoDateUs() {
 		return LocalDate.now(usZoneId).minusMonths(1).format(dateFormatter);
 	}
+
+	public String toKoreaDate(String fredDateStr) {
+		LocalDate localDate = LocalDate.parse(fredDateStr, dateFormatter);
+		var utcZoneId = ZoneId.of("UTC");
+		var utcZoned = localDate.atStartOfDay(utcZoneId);
+		var koreanZoned = utcZoned.withZoneSameInstant(defaultZoneId);
+		return koreanZoned.format(dateFormatter);
+	}
 }
