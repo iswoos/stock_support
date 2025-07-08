@@ -42,12 +42,11 @@ public class GetIndicatorService implements GetIndicatorUseCase {
 			JsonNode observations = objectMapper.readTree(response.body()).get("observations");
 
 			List<ObservationsInfo> result = new ArrayList<>();
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 			for (JsonNode observation : observations) {
 				String date = observation.path("date").asText();
 				String value = observation.path("value").asText();
 
-				String localTime = timezone.toKoreaDate(date); // 예시 함수
+				String localTime = timezone.toKoreaDate(date);
 
 				result.add(new ObservationsInfo(localTime, value));
 			}
