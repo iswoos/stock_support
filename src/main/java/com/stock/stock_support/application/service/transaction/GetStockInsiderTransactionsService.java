@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stock.stock_support.application.port.in.usecase.news.dto.response.CompanyNewsInfo;
 import com.stock.stock_support.application.port.in.usecase.transaction.GetStockInsiderTransactions;
 import com.stock.stock_support.application.port.in.usecase.transaction.dto.response.StockInsiderTransactionsInfo;
 import com.stock.stock_support.global.common.Timezone;
