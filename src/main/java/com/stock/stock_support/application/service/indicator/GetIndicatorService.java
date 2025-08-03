@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stock.stock_support.adapter.in.controller.indicator.dto.request.GetIndicator;
+import com.stock.stock_support.adapter.in.controller.indicator.dto.request.GetIndicatorSeriesId;
 import com.stock.stock_support.application.port.in.usecase.indicator.GetIndicatorUseCase;
 import com.stock.stock_support.application.port.in.usecase.indicator.dto.response.ObservationsInfo;
 import com.stock.stock_support.global.common.Timezone;
@@ -34,7 +33,7 @@ public class GetIndicatorService implements GetIndicatorUseCase {
 	private final Timezone timezone;
 
 	@Override
-	public List<ObservationsInfo> getIndicator(GetIndicator getIndicator) {
+	public List<ObservationsInfo> getIndicator(GetIndicatorSeriesId getIndicator) {
 		try {
 			HttpClient client = HttpClient.newHttpClient();
 			HttpRequest request = HttpRequest.newBuilder()
