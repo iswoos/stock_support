@@ -25,7 +25,10 @@ import lombok.RequiredArgsConstructor;
 public class GetIndicatorService implements GetIndicatorUseCase {
 
 	@Value("${fred.api-key}")
-	private String api_key;
+	private String fred_api_key;
+
+	@Value("${financialmodelingprep.api-key}")
+	private String financialmodelingprep_api_key;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final Timezone timezone;
@@ -35,7 +38,7 @@ public class GetIndicatorService implements GetIndicatorUseCase {
 		try {
 			HttpClient client = HttpClient.newHttpClient();
 			HttpRequest request = HttpRequest.newBuilder()
-				.uri(new URI("https://api.stlouisfed.org/fred/series/observations?series_id=%s&api_key=%s&file_type=json".formatted(getIndicator.series_id(), api_key)))
+				.uri(new URI("https://api.stlouisfed.org/fred/series/observations?series_id=%s&api_key=%s&file_type=json".formatted(getIndicator.series_id(), fred_api_key)))
 				.GET()
 				.build();
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
