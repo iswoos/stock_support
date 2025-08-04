@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.stock.stock_support.adapter.in.controller.indicator.dto.request.GetIndicatorName;
 import com.stock.stock_support.adapter.in.controller.indicator.dto.request.GetIndicatorSeriesId;
 import com.stock.stock_support.application.port.in.usecase.indicator.GetIndicatorUseCase;
 import com.stock.stock_support.application.port.in.usecase.indicator.dto.response.ObservationsInfo;
@@ -33,14 +35,18 @@ public class GetIndicatorService implements GetIndicatorUseCase {
 	private final Timezone timezone;
 
 	@Override
-	public List<ObservationsInfo> getIndicator(GetIndicatorSeriesId getIndicator) {
+	public List<ObservationsInfo> getIndicatorBySeriesId(GetIndicatorSeriesId getIndicatorSeriesId) {
 		try {
 			HttpClient client = HttpClient.newHttpClient();
 			HttpRequest request = HttpRequest.newBuilder()
-				.uri(new URI("https://api.stlouisfed.org/fred/series/observations?series_id=%s&api_key=%s&file_type=json".formatted(getIndicator.series_id(), fred_api_key)))
+				.uri(new URI("https://api.stlouisfed.org/fred/series/observations?series_id=%s&api_key=%s&file_type=json".formatted(getIndicatorSeriesId.series_id(), fred_api_key)))
 				.GET()
 				.build();
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			if (response.statusCode() != 200) {
+				System.err.println("API 호출 실패: " + response.body());
+			}
+
 			JsonNode observations = objectMapper.readTree(response.body()).get("observations");
 
 			List<ObservationsInfo> result = new ArrayList<>();
@@ -49,6 +55,44 @@ public class GetIndicatorService implements GetIndicatorUseCase {
 				String value = observation.path("value").asText();
 
 				String localTime = timezone.toKoreaDate(date);
+
+				result.add(new ObservationsInfo(localTime, value));
+			}
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public List<ObservationsInfo> getIndicatorByName(GetIndicatorName getIndicatorName) {
+		try {
+			String from = getIndicatorName.from();
+			String to = getIndicatorName.to();
+
+			if (from == null || from.isBlank()) {
+				from = timezone.oneMonthAgoDateUs();
+			}
+			if (to == null || to.isBlank()) {
+				to = timezone.nowDateUs();
+			}
+
+			HttpClient client = HttpClient.newHttpClient();
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(new URI("https://financialmodelingprep.com/stable/economic-indicators?name=%s&from=%s&to=%s&apikey=%s".formatted(getIndicatorName.name(), from, to, financialmodelingprep_api_key)))
+				.GET()
+				.build();
+			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			if (response.statusCode() != 200) {
+				System.err.println("API 호출 실패: " + response.body());
+			}
+			ArrayNode arrayNode = (ArrayNode) objectMapper.readTree(response.body());
+			List<ObservationsInfo> result = new ArrayList<>();
+			for (JsonNode node : arrayNode) {
+				String date = node.path("date").asText();
+				String value = node.path("value").asText();
+				String localTime = timezone.toKoreaDate(date); // 사용자 정의 함수일 것으로 추정됨
 
 				result.add(new ObservationsInfo(localTime, value));
 			}
