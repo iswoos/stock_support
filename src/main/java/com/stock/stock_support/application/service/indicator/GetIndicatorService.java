@@ -92,7 +92,7 @@ public class GetIndicatorService implements GetIndicatorUseCase {
 			for (JsonNode node : arrayNode) {
 				String date = node.path("date").asText();
 				String value = node.path("value").asText();
-				String localTime = timezone.toKoreaDate(date); // 사용자 정의 함수일 것으로 추정됨
+				String localTime = timezone.toKoreaDate(date);
 
 				result.add(new ObservationsInfo(localTime, value));
 			}
