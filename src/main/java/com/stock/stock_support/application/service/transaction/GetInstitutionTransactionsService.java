@@ -69,7 +69,7 @@ public class GetInstitutionTransactionsService implements GetInstitutionTransact
 				return Collections.emptyList();
 			}
 
-			// 사용 가능한 분기 목록 가져오기
+
 			List<Integer> availableQuarters = getAvailableQuarters();
 			if (availableQuarters.isEmpty()) {
 				log.warn("No available quarters found");
@@ -78,7 +78,7 @@ public class GetInstitutionTransactionsService implements GetInstitutionTransact
 
 			log.info("Available quarters for symbol {}: {}", request.symbol(), availableQuarters);
 
-			// 최신 사용 가능한 분기부터 시도
+
 			for (Integer quarterId : availableQuarters) {
 				List<StockInstitutionTransactionsInfo> result = fetchHoldersData(stockId, request.symbol(), quarterId);
 				if (!result.isEmpty()) {
@@ -161,7 +161,7 @@ public class GetInstitutionTransactionsService implements GetInstitutionTransact
 				}
 			}
 
-			// 내림차순 정렬 (최신부터)
+
 			availableQuarters.sort((a, b) -> b.compareTo(a));
 
 			// 무료 사용자 제한 적용
