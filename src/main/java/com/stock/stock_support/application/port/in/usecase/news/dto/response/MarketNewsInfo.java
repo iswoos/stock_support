@@ -9,6 +9,7 @@ public record MarketNewsInfo(
 	String related,
 	String source,
 	String summary,
-	String url
+	String url,
+	String site
 ) {
 }
